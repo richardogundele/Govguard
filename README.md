@@ -1,5 +1,10 @@
 ## GovGuard AI – AI Decision Governance Infrastructure
 
+**Status**: Experimental MVP – **UK AI Playbook only**.  
+Multi-framework scoring (NIST AI RMF, EU AI Act, UAE AI Charter) is planned but **not implemented yet**.
+
+---
+
 GovGuard AI is an **AI Decision Governance Infrastructure** platform. It acts as a **governance gateway** that sits between AI agents and the real world, intercepting their decisions, scoring governance risk, and returning **ALLOW / REVIEW / BLOCK** style actions before those decisions are applied to real people.
 
 This repository contains the **open source core** of GovGuard:
@@ -33,6 +38,30 @@ At this early MVP stage the system focuses on the **UK AI Playbook** use case:
   - Returns a typed `GovernanceResult` object instead of raw dictionaries.
 
 The stack is intentionally simple and fully open source: **Python, FastAPI, requests**, with no external LLM APIs. LangGraph, Supabase/Postgres, React dashboard, and multi‑framework scoring will be layered on next, as described in the spec.
+
+## Limitations
+
+- Only the **UK AI Playbook** scoring engine is implemented.
+- No authentication / API keys are enforced yet (suitable for local / dev use only).
+- No web dashboard – responses are JSON over HTTP.
+
+## Configuration
+
+Set the `GOVGUARD_DATABASE_URL` environment variable before starting the API. This tells GovGuard where to store decisions.
+
+**Linux / macOS:**
+
+```bash
+export GOVGUARD_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/govguard"
+```
+
+**Windows PowerShell:**
+
+```powershell
+$env:GOVGUARD_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/govguard"
+```
+
+Adjust the DSN to match your local Postgres setup or Supabase connection string.
 
 ## Quick start – run the local gateway
 
@@ -131,17 +160,43 @@ The SDK will handle:
 - Passing any messy keys through the Intercept Agent in the backend.
 - Parsing the JSON response into a structured `GovernanceResult`.
 
+## Security and Privacy
+
+- **No external LLM APIs** – decision data never leaves your environment.
+- **Database credentials must be set via environment variable** (`GOVGUARD_DATABASE_URL`) – never commit real credentials.
+- Business documents and `.env` files are excluded from the repository via `.gitignore`.
+
 ## Roadmap (from the spec)
 
-Planned next steps that will be added to this repository over time:
+Planned next steps (contributions welcome):
 
-- **Persistence with Supabase/Postgres** – store all decisions, scores, and audit reports.
-- **LangGraph orchestration** – implement the four-agent architecture:
-  - Intercept Agent → Scoring Agents (per framework) → Report Agent → Monitor Agent.
+- **LangGraph orchestration** – wire Intercept → UK Scoring → Report as an explicit graph (skeleton exists in `agents/graph.py`).
 - **Report Agent** – generate structured, plain‑English audit reports and PDF exports.
 - **Monitor Agent** – scheduled trend tracking and drift alerts over time.
 - **React + Tailwind dashboard** – upload logs, view live scores, download reports.
 - **Additional frameworks** – UAE AI Charter, NIST AI RMF, EU AI Act as parallel scoring agents.
+
+## Examples
+
+The `examples/` folder contains small scripts demonstrating SDK usage:
+
+- `examples/demo_cli.py` – send a standard decision payload and print the result.
+- `examples/messy_payload.py` – show how the Intercept Agent handles aliased keys.
+
+Run them with the API server running:
+
+```bash
+python examples/demo_cli.py
+python examples/messy_payload.py
+```
+
+## Contributing
+
+Contributions are welcome. See `docs/CONTRIBUTING.md` for guidelines on:
+
+- Setting up your local environment.
+- Code style and commenting conventions.
+- How to add a new scoring framework.
 
 ## License
 

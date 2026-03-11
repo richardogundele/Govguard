@@ -1,2 +1,18 @@
 # Ignore local business plan document
 GovGuard_AI_Business Plan.docx
+
+# Environment files (secrets, credentials)
+.env
+.env.*
+
+# Python bytecode and cache
+*.pyc
+__pycache__/
+
+# IDE / editor settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

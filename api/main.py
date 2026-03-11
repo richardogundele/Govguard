@@ -9,11 +9,25 @@ from typing import Dict, Any
 
 from engine.core import Decision, score_uk_ai_playbook
 from agents.intercept import InterceptAgent
+from persistence.db import init_db, store_decision
 
 # Create the FastAPI app instance. This is the HTTP server object.
 app = FastAPI(title="GovGuard AI – UK MVP API")
 
+# Single InterceptAgent instance reused across requests.
 interceptor = InterceptAgent()
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    """
+    FastAPI startup hook.
+
+    This runs once when the application starts and:
+    - Ensures the database schema is created (decisions table).
+    """
+    init_db()
+
 
 @app.post("/scan-decision")
 def scan_decision(payload: Dict[str, Any] = Body(...)):
@@ -30,8 +44,19 @@ def scan_decision(payload: Dict[str, Any] = Body(...)):
     #         handle alias keys and map everything into the Decision schema.
     decision: Decision = interceptor.normalise(payload)
 
-    # Step 2: run the governance scoring engine on the normalised Decision
+    # Step 2: run the governance scoring engine on the normalised Decision.
     result = score_uk_ai_playbook(decision)
 
-    # Step 3: return the result as JSON response
-    return result
+    # Step 3: persist the decision and scoring result in Postgres so that
+    #         the Monitor Agent and dashboard can use this data later.
+    decision_id = store_decision(
+        decision=decision,
+        scoring_result=result,
+        raw_payload=payload,
+    )
+
+    # Step 4: return the scoring result, now enriched with the decision_id.
+    return {
+        "decision_id": decision_id,
+        **result,
+    }

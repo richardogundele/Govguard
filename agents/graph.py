@@ -43,8 +43,7 @@ def intercept_node(state: GovGuardState) -> GovGuardState:
       - Uses InterceptAgent to produce a normalised Decision.
       - Stores Decision back into state.
     """
-
-raw = state["raw_payload"]
+    raw = state["raw_payload"]
     decision = _interceptor.normalise(raw)
     state["decision"] = decision
     return state
